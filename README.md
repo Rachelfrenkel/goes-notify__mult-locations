@@ -1,3 +1,8 @@
+# Fork updates
+
+The purpose of this fork is to allow for the selection of multiple locations when using the program (instead of having to copy the config files for each location and run the program for each one). 
+I have also added in some helpful logging, and some debugging tips here in the README. Enjoy!
+
 # goes-notify
 
 This app will simply parse json output from the interview scheduler for many of CBP's Trusted Traveler Programs, including Global Entry, NEXUS, SENTRI, US/Mexico FAST, and US/Canada FAST. You don't need to provide a login, it will simply check the available dates against your current interview date, then notify you if a better date can be locked in.
