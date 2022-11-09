@@ -105,10 +105,11 @@ def notify_sms(settings, dates):
         logging.info('Sending SMS.')
         client.messages.create(body=body, to=to_number, from_=from_number)
 
-def main(settings):
+def main(settings, location):
     try:
+        logging.debug("Checking location %s", location)
         # obtain the json from the web url
-        data = requests.get(GOES_URL_FORMAT.format(settings['enrollment_location_id'])).json()
+        data = requests.get(GOES_URL_FORMAT.format(location)).json()
 
     	# parse the json
         if not data:
@@ -125,6 +126,7 @@ def main(settings):
                     dates.append(dtp.strftime('%A, %B %d @ %I:%M%p'))
 
         if not dates:
+            logging.info("No dates available before your selected date")
             return
 
         hash = hashlib.md5(''.join(dates) + current_apt.strftime('%B %d, %Y @ %I:%M%p')).hexdigest()
@@ -141,7 +143,7 @@ def main(settings):
         logging.critical("Something went wrong when trying to obtain the openings")
         return
 
-    msg = 'Found new appointment(s) in location %s on %s (current is on %s)!' % (settings.get("enrollment_location_id"), dates[0], current_apt.strftime('%B %d, %Y @ %I:%M%p'))
+    msg = 'Found new appointment(s) in location %s on %s (current is on %s)!' % (location, dates[0], current_apt.strftime('%B %d, %Y @ %I:%M%p'))
     logging.info(msg + (' Sending email.' if not settings.get('no_email') else ' Not sending email.'))
 
     if settings.get('notify_osx'):
@@ -154,7 +156,7 @@ def main(settings):
 def _check_settings(config):
     required_settings = (
         'current_interview_date_str',
-        'enrollment_location_id'
+        'locations'
     )
 
     for setting in required_settings:
@@ -181,7 +183,7 @@ if __name__ == '__main__':
 
     # Parse Arguments
     parser = argparse.ArgumentParser(description="Command line script to check for goes openings.")
-    parser.add_argument('--config', dest='configfile', default='%s/config.json' % pwd, help='Config file to use (default is config.json)')
+    parser.add_argument('--config', dest='configfile', default='%s./config.json' % pwd, help='Config file to use (default is config.json)')
     arguments = vars(parser.parse_args())
     logging.info("config file is:" + arguments['configfile'])
     # Load Settings
@@ -209,4 +211,5 @@ if __name__ == '__main__':
 
     logging.debug('Running cron with arguments: %s' % arguments)
 
-    main(settings)
+    for location in settings.get('locations'):
+        main(settings, location)
