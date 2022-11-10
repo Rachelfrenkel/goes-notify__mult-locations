@@ -23,14 +23,21 @@ from email.mime.multipart import MIMEMultipart
 from math import log
 
 EMAIL_TEMPLATE = """
-<p>Good news! New Global Entry appointment(s) available on the following dates:</p>
+<p>Good news! New Global Entry appointment(s) in %s available on the following dates:</p>
 %s
 <p>Your current appointment is on %s</p>
 <p>If this sounds good, please sign in to https://ttp.cbp.dhs.gov/ to reschedule.</p>
 """
 GOES_URL_FORMAT = 'https://ttp.cbp.dhs.gov/schedulerapi/slots?orderBy=soonest&limit=3&locationId={0}&minimum=1'
 
-def notify_send_email(dates, current_apt, settings, use_gmail=False):
+location_dict = {
+    "5446" : "SF",
+    "5142" : "DC",
+    "5140" : "NY"
+}
+
+
+def notify_send_email(dates, current_apt, settings, location, use_gmail=False):
     sender = settings.get('email_from')
     recipient = settings.get('email_to', sender)  # If recipient isn't provided, send to self.
 
@@ -61,7 +68,8 @@ def notify_send_email(dates, current_apt, settings, use_gmail=False):
 
         dateshtml += "</ul>"
 
-        message = EMAIL_TEMPLATE % (dateshtml, current_apt.strftime('%B %d, %Y'))
+        enrollment_center = location_dict[location] if location in location_dict.keys() else "undefined center"
+        message = EMAIL_TEMPLATE % (enrollment_center, dateshtml, current_apt.strftime('%B %d, %Y'))
 
         msg = MIMEMultipart()
         msg['Subject'] = subject
@@ -149,7 +157,7 @@ def main(settings, location):
     if settings.get('notify_osx'):
         notify_osx(msg)
     if not settings.get('no_email'):
-        notify_send_email(dates, current_apt, settings, use_gmail=settings.get('use_gmail'))
+        notify_send_email(dates, current_apt, settings, str(location), use_gmail=settings.get('use_gmail'))
     if settings.get('twilio_account_sid'):
         notify_sms(settings, dates)
 
@@ -185,7 +193,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Command line script to check for goes openings.")
     parser.add_argument('--config', dest='configfile', default='%s./config.json' % pwd, help='Config file to use (default is config.json)')
     arguments = vars(parser.parse_args())
-    logging.info("config file is:" + arguments['configfile'])
+    # logging.info("config file is:" + arguments['configfile'])
     # Load Settings
     try:
         with open(arguments['configfile']) as json_file:
@@ -209,7 +217,7 @@ if __name__ == '__main__':
         handler.setLevel(logging.DEBUG)
         logging.getLogger('').addHandler(handler)
 
-    logging.debug('Running cron with arguments: %s' % arguments)
+    # logging.debug('Running cron with arguments: %s' % arguments)
 
     for location in settings.get('locations'):
         main(settings, location)

@@ -31,6 +31,8 @@ With the `use_gmail` config setting, you can send yourself an email when an appo
 To use multiple locations, add an array of enrollment location ID numbers to the "location" key in the config file. For example:
 `"locations": ["5446","5142", "5140"]`,
 
+In `goes-notify.py`, add the locations you are interested in into the locations_dict dictionary (line 33). This will add the location-specific information into the email so that you know which location has the availability. 
+
 # Debugging
 
 import error? `pip install requests`
